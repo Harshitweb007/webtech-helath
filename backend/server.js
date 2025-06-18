@@ -6,7 +6,8 @@ import dotenv from 'dotenv';
 dotenv.config(); // Load API key from .env
 
 const app = express();
-const PORT = 3000; // Must match frontend request URL
+const PORT = process.env.PORT || 3000;
+
 
 app.use(express.json()); // Parse JSON requests
 app.use(cors()); // Allow frontend to access backend
