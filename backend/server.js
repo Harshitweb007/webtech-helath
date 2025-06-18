@@ -53,6 +53,9 @@ ${isNewConversation ? 'This is a new conversation. Greet the user warmly and exp
 User: ${message}
 `;
 
+app.get('/', (req, res) => {
+  res.send('Chatbot backend is running!');
+});
 
         const response = await fetch(API_URL, {
             method: 'POST',
