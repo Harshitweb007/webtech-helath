@@ -11,7 +11,7 @@ dotenv.config();
 // App setup
 const app = express();
 const PORT = process.env.PORT || 3000;
-const API_KEY = process.env.API_KEY;
+const API_KEY =AIzaSyDqdR8Ec-R_bb-mrnCmoaS-dhqoZ9CmxSk;
 
 // Exit if API key is missing
 if (!API_KEY) {
