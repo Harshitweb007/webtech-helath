@@ -5,7 +5,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-dotenv.config(); // Load API key from .env
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,23 +23,23 @@ const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-
 // Track conversation state for each user
 const userConversations = new Map();
 
-// Enable JSON and CORS
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Path handling for serving static frontend files
+// Path config for static files
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files from /public
+// Serve frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route: Health check
+// Health check
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Route: Chat handler
+// Chat route
 app.post('/chat', async (req, res) => {
   try {
     const { message, userId = "anonymous" } = req.body;
@@ -47,23 +48,24 @@ app.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Check if it's a new conversation
+    // New conversation check
     const isNewConversation = !userConversations.has(userId);
     if (isNewConversation) {
       userConversations.set(userId, true);
     }
 
-    // Gemini Prompt
+    // Prompt format
     const prompt = `
-You are Medinova, a compassionate and knowledgeable AI Doctor...
+You are Medinova, a compassionate and knowledgeable AI Doctor.
 
 ${isNewConversation
-      ? 'This is a new conversation. Greet the user warmly and express your readiness to assist with medical advice.'
-      : 'This is an ongoing conversation. Provide specific and actionable suggestions based on the current symptoms.'}
+        ? 'This is a new conversation. Greet the user warmly and express your readiness to assist with medical advice.'
+        : 'This is an ongoing conversation. Provide specific and actionable suggestions based on the current symptoms.'}
 
 User: ${message}
 `;
 
+    // Send request to Gemini API
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,19 +76,25 @@ User: ${message}
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      console.error("🔴 Gemini API Error:", errorText);
+      throw new Error(`Gemini API responded with status ${response.status}`);
     }
 
     const data = await response.json();
-    const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm not sure.";
+    console.log("✅ Gemini API response:", JSON.stringify(data, null, 2));
+
+    const botReply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I didn't quite understand that.";
 
     res.json({ reply: botReply });
+
   } catch (error) {
     console.error('❌ Request Error:', error.message);
-    console.error('🔍 Full Error:', error); // Helps in Render logs
+    console.error('🔍 Full Stack Trace:', error);
     res.status(500).json({ reply: "Sorry, something went wrong!" });
   }
 });
 
 // Start server
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
+});
